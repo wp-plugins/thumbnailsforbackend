@@ -1,4 +1,4 @@
-=== Duplicate Post ===
+=== Thumbnails for Backend ===
 Contributors: Giorgio Aquino
 Tags: thumbnail, admin, backend, list
 Requires at least: 3.0
