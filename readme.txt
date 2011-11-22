@@ -1,11 +1,11 @@
 === Thumbnails for Backend ===
-Contributors: Giorgio Aquino
+Contributors: G100g
 Tags: thumbnail, admin, backend, list
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.0.1
+Stable tag: 0.0.2
 
-Here is a simple plugin to add thumbnails to your Posts list within the WordPress backend.
+Simple plugin to add thumbnails to your Posts list within the WordPress backend.
 
 == Description ==
 
@@ -23,24 +23,29 @@ You can choose the built in Post and Page, along with all added Custom Post Type
 
 == Frequently Asked Questions ==
 
-= Can I choose thumbnails in Custom Post Types?  =
+= Can I choose thumbnails for Custom Post Types?  =
 
 Yes, select them in under Settings -> Thumbnails for Backend
 
 == Screenshots ==
 
 1. Preview
-screenshot-1.(png|jpg|jpeg|gif)
+
 2. Setting Page
-screenshot-2.(png|jpg|jpeg|gif)
 
 == Upgrade Notice ==
+
+= 0.0.2 =
+Fixed Layout issue. Thanks to Michael Atkins.
 
 = 0.0.1 =
 First release
 
 
 == Changelog ==
+
+= 0.0.2 =
+* Fixed Layout issue. Thanks to Michael Atkins.
 
 = 0.0.1 =
 * First release
