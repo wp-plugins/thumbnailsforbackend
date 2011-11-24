@@ -2,14 +2,14 @@
 /**
  * @package thumbfb
  * @author G100g
- * @version 0.0.2
+ * @version 0.0.3
  */
 /*
 Plugin Name: Thumbnails for Backend
 Plugin URI: http://g100g.net/wordpress-stuff/thumbnails-for-backend-plugin/
 Description: Simple plugin to add thumbnails to your Posts list within the WordPress backend.
 Author: G100g
-Version: 0.0.2
+Version: 0.0.3
 Author URI: http://g100g.net/
 
 	Copyright (C) 2011 by Giorgio Aquino
@@ -106,7 +106,11 @@ class Thumbnailsforbackend {
 	        case 'preview':
 	        
 	        	//Becco il thumb della prima immagine
-	        	$id_thumb = get_post_thumbnail_id($post->ID);
+	        	if (function_exists('get_post_thumbnail_id')) {
+	        		$id_thumb = get_post_thumbnail_id($post->ID);
+	        	} else {
+	        		$id_thumb = null;
+	        	}
 
 				if ($post->post_parent) {
 
@@ -123,10 +127,14 @@ class Thumbnailsforbackend {
 	        	if ($id_thumb == null) {
 	        		
 					//Get first Attached Image
-					$images = get_children('post_parent='.$post->ID.'&post_type=attachment&post_mime_type=image');
+					$images = get_posts('post_parent='.$post->ID.'&post_type=attachment&post_mime_type=image&order=ASC&orderby=menu_order&posts_per_page=1');
 					
 					if ( !empty($images) ) {
-						$image_id = key($images);
+
+						reset($images);
+						$image = current($images);
+						
+						$image_id = $image->ID;
 ?>						
 						<a href="<?php echo get_edit_post_link($post->ID); ?>"><?php echo  wp_get_attachment_image( $image_id , $size, null, array('style' => $style, 'class' => $child)); ?></a>
 <?php						
