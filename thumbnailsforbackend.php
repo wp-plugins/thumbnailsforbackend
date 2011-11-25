@@ -1,6 +1,6 @@
 <?php
 /**
- * @package thumbfb
+ * @package thumbnailsforbackend
  * @author G100g
  * @version 0.0.3
  */
