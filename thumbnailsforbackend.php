@@ -2,14 +2,14 @@
 /**
  * @package thumbnailsforbackend
  * @author G100g
- * @version 0.0.3
+ * @version 0.0.4
  */
 /*
 Plugin Name: Thumbnails for Backend
 Plugin URI: http://g100g.net/wordpress-stuff/thumbnails-for-backend-plugin/
 Description: Simple plugin to add thumbnails to your Posts list within the WordPress backend.
 Author: G100g
-Version: 0.0.3
+Version: 0.0.4
 Author URI: http://g100g.net/
 
 	Copyright (C) 2011 by Giorgio Aquino
