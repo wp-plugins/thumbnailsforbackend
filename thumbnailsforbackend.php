@@ -120,6 +120,8 @@ class Thumbnailsforbackend {
 					$child = 'child';
 					$size = array(60,60);
 				} else {
+				
+					$style = '';				
 					$child = '';
 					$size = array(80,80);
 				}
@@ -176,7 +178,7 @@ class Thumbnailsforbackend {
 	**/	
 
 	function admin_menu() {
-		add_options_page('Thumbnails for Backend', 'Thumbnails for Backend', 8, basename(__FILE__), array(&$this, 'admin_page') );
+		add_options_page('Thumbnails for Backend', 'Thumbnails for Backend', 'edit_posts', basename(__FILE__), array(&$this, 'admin_page') );
 	}
 	
 	function admin_page() {
