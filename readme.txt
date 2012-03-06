@@ -3,7 +3,7 @@ Contributors: g100g
 Tags: thumbnail, admin, backend, list
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.0.3
+Stable tag: 0.0.4
 
 Simple plugin to add thumbnails to your Posts list within the WordPress backend.
 
@@ -35,6 +35,9 @@ Yes, select them in under Settings -> Thumbnails for Backend
 
 == Upgrade Notice ==
 
+= 0.0.4 =
+Removed deprecated code. Thanks to cubecolour!
+
 = 0.0.3 =
 Now themes without support for Post Thumbnail show thumbnails in Admin.
 
@@ -46,6 +49,9 @@ First release
 
 
 == Changelog ==
+
+= 0.0.4 =
+Removed deprecated code. Thanks to cubecolour!
 
 = 0.0.3 =
 * Now themes without support for Post Thumbnail show thumbnails in Admin.
