@@ -2,14 +2,14 @@
 /**
  * @package thumbnailsforbackend
  * @author G100g
- * @version 0.0.4
+ * @version 0.0.5
  */
 /*
 Plugin Name: Thumbnails for Backend
 Plugin URI: http://g100g.net/wordpress-stuff/thumbnails-for-backend-plugin/
 Description: Simple plugin to add thumbnails to your Posts list within the WordPress backend.
 Author: G100g
-Version: 0.0.4
+Version: 0.0.5
 Author URI: http://g100g.net/
 
 	Copyright (C) 2011 by Giorgio Aquino
@@ -37,19 +37,40 @@ Author URI: http://g100g.net/
 class Thumbnailsforbackend {
 
 	var $thumbfb_options = array(
-								'thumbfb_post_types' => array()
+								'thumbfb_post_types' => array(),
+								'thumbfb_embedded_images' => 0
 								);
 
-	function __construct() {
-		$this->get_options();
+	public function __construct() {
+		$this->update_options();
 	}
 	
-	function get_options() {
-		$this->thumbfb_options = unserialize( get_option('thumbfb_options') );
+	private function get_options() {
+	
+		$this->thumbfb_options['thumbfb_post_types'] = get_option('thumbfb_post_types');
+		$this->thumbfb_options['thumbfb_embedded_images'] = get_option('thumbfb_embedded_images');
+		
 		return $this->thumbfb_options;
 	}
 	
-	function add_thumbnails() {
+	private function update_options() {
+		
+		//Aggirono le opzioni alla nuova versione
+		
+		$thumbfb_options = get_option('thumbfb_options');
+		
+		if ($thumbfb_options != "") {
+
+			$thumbfb_options = unserialize( $thumbfb_options );
+			
+			update_option( 'thumbfb_post_types', $thumbfb_options["thumbfb_post_types"] );
+			update_option( 'thumbfb_options', "" );
+		
+		}
+		
+	}
+	
+	public function add_thumbnails() {
 		
 		$this->get_options();
 			
@@ -78,7 +99,7 @@ class Thumbnailsforbackend {
 				
 	}
 
-	function posts_columns($post_columns) {
+	public function posts_columns($post_columns) {
 		
 			global $post;
 			
@@ -98,75 +119,103 @@ class Thumbnailsforbackend {
 			return $_post_columns;
 	}
 	
-	function posts_column($name) {
+	public function posts_column($name) {
 	    
 	    global $post;
 	    switch ($name) {
 	    	
 	        case 'preview':
 	        
-	        	//Becco il thumb della prima immagine
-	        	if (function_exists('get_post_thumbnail_id')) {
-	        		$id_thumb = get_post_thumbnail_id($post->ID);
-	        	} else {
-	        		$id_thumb = null;
-	        	}
+	        	$image_html = "";
+	        
+	        	$edit_post_link = get_edit_post_link($post->ID);
+	        
+	        	if ($post->post_parent) {
 
-				if ($post->post_parent) {
-
-					_get_post_ancestors($post);
+					$parents = get_post_ancestors($post);
 					
-					$style = 'margin-left: ' .(count($post->ancestors) * 10) . 'px;';
+//					var_dump($parents);
+					
+					$style = 'margin-left: ' .(count($parents) * 10) . 'px;';
 					$child = 'child';
 					$size = array(60,60);
+				
 				} else {
 				
 					$style = '';				
 					$child = '';
 					$size = array(80,80);
 				}
+	        
+	        	//Becco il thumb della prima immagine
+	        	if (function_exists('get_post_thumbnail_id')) {
+	        		$id_thumb = get_post_thumbnail_id($post->ID);
+	        		if ($id_thumb != null) {
+	        			$image_html = '<a href="' . $edit_post_link . '">'. the_post_thumbnail( $size, array('style' => $style, 'class' => $child) ) . '</a>';
+	        		}
+	        	}
 	        	
-	        	if ($id_thumb == null) {
-	        		
-					//Get first Attached Image
+	        	//Get first Attached Image
+	        	if ($image_html == "") {
+					
 					$images = get_posts('post_parent='.$post->ID.'&post_type=attachment&post_mime_type=image&order=ASC&orderby=menu_order&posts_per_page=1');
 					
 					if ( !empty($images) ) {
 
 						reset($images);
-						$image = current($images);
-						
+						$image = current($images);						
 						$image_id = $image->ID;
-?>						
-						<a href="<?php echo get_edit_post_link($post->ID); ?>"><?php echo  wp_get_attachment_image( $image_id , $size, null, array('style' => $style, 'class' => $child)); ?></a>
-<?php						
+						
+						$image_html = '<a href="' . $edit_post_link .'">'. wp_get_attachment_image( $image_id , $size, null, array('style' => $style, 'class' => $child)) . '</a>';
 
-					} else {
-					
-	?>
-				<strong>No Image</strong>
-	<?php			}        	
-	        	} else {
-	?>
-		<a href="<?php echo get_edit_post_link($post->ID); ?>"><?php the_post_thumbnail( $size, array('style' => $style, 'class' => $child) ); ?></a>
-	<?php
-	     
-	     	}
+					}        	
+	        	}
+	        	
+	        	//Get first embedded image
+	        	if ($image_html == "" && $this->thumbfb_options["thumbfb_embedded_images"] == 1) {
+	        		
+	        		$content = apply_filters('the_content', $post->post_content);
+
+	        		preg_match_all( '/<img[^>]+src=[\'"]([^\'"]+)[\'"].*>/i', $content, $images);
+
+					if (is_array($images) && array_key_exists(1, $images) && array_key_exists(0, $images[1])) {
+						$image_html = '<a class="external_thumbnail" href="' . $edit_post_link .'"><img src="' . $images[1][0] . '" alt="" class"'. $child .'" /></a>';
+						
+					}
+	        	
+	        	}
+	        	
+	        	//No image
+	        	if ($image_html == "") $image_html = "&nbsp;";
+	     		
+	     		echo $image_html;
+	     		
+	     	break;
 	            
 	    }
 	}
 	
-	function admin_header_style() {
+	public function admin_header_style() {
 	?>
 	<style type="text/css">
 	th#preview { width: 90px; }
-		td.preview img {text-align: left; }		
+		td.preview img {
+				display: block;
+				text-align: left; width: 80px;
+				height: auto;}		
 		td.preview img.child {
 			border-left: 4px solid #DDD;
 			padding-left: 4px;			
 		}
-		td.column-preview {height: 80px; width: 90px; text-align: center;
+		td.column-preview { float: none; width: 90px; text-align: center; }
+		
+		a.external_thumbnail {
+			display: block;
+			width: 80px;
+			height: 80px;
+			overflow: hidden;
 		}
+		
 	</style>
 	<?php
 	}
@@ -177,110 +226,101 @@ class Thumbnailsforbackend {
 		
 	**/	
 
-	function admin_menu() {
+	public function admin_menu() {
 		add_options_page('Thumbnails for Backend', 'Thumbnails for Backend', 'edit_posts', basename(__FILE__), array(&$this, 'admin_page') );
 	}
 	
-	function admin_page() {
+	public function admin_page() {
 	
-		global $post;
-		
-		$msg = array();
-
-		if (isset($_REQUEST['action'])) {			
-			  	
-			  	if (!isset($_REQUEST['create']) ) {
-			  	
-				  	switch($_REQUEST['action']) {
-				  	
-				  		case 'save':
-				  		
-			  				//Ritrovo i valori
-			  				$tmp_options = unserialize( get_option('thumbfb_options') );
-			  				
-			  				$tmp_options["thumbfb_post_types"] = $_REQUEST['thumbfb_post_types'];
-			  				
-			  				update_option( 'thumbfb_options', serialize($tmp_options) );
-			  				
-			  				$msg[] = array(0, 'Options saved.');
-				  		
-				  		break;
-				  		
-				  	}
-			  	
-			  	}
-			  	
+		if ( !current_user_can( 'manage_options' ) )  {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 		}
 
-		$nonce = wp_create_nonce('thumbfb');
-		$actionurl = $_SERVER['REQUEST_URI'];
-		$plainurl = 'admin.php?page=adminthumbnails.php';
-		
-		$thumbfb_options = get_option('thumbfb_options');
-	
-		$thumbfb_options = is_string($thumbfb_options) ? unserialize( $thumbfb_options ) : $thumbfb_options;
-			
-		$custom_post_types = get_post_types(array(
-				'public'   => true,
-				'_builtin' => false
-		
-		));
-		
-		$custom_post_types[] = 'post';
-		$custom_post_types[] = 'page';
-
 ?>
-
-<div class="wrap">
 	
-	<div class="icon32" id="icon-options-general"><br/></div>
+	<div class="wrap">
+	<?php screen_icon(); ?>
 	<h2>Thumbnails for Backend</h2>
 	
-<?php if (!empty($msg) ) : foreach ($msg as $m) :?>
-
-	<?php _e('<div id="message" class="'.($m[0] == 1 ? 'error' : 'updated' ).' fade"><p>' . $m[1] . '</p></div>'); ?>
-
-<?php endforeach; endif; ?>	
+		<form method="post" action="options.php"> 
 	
-	<form action="<?php echo $action_url; ?>" method="post">
-		<input type="hidden" name="action" value="save" /> 
-		<input type="hidden" id="_wpnonce" name="_wpnonce" value="<?php echo $nonce; ?>" />
+	<?php settings_fields( 'thumbnailsforbackend-options-group' );
 	
-		<h3>Options</h3>
-
-	<table class="form-table">
-		<tbody>
-				
-		<tr valign="top">
-			<th scope="row"><label for="nf_category">Show thumbnails in</label></th>
-			<td>
-<?php 
-
-			foreach ($custom_post_types as $cpt) : 
-				//setup_postdata($post);
-				$selected = '';
-				
-				if (is_array( $thumbfb_options["thumbfb_post_types"] )) {	
-					$selected = ( in_array( $cpt, $thumbfb_options["thumbfb_post_types"] ) ? ' checked="checked" ' : '' ); 
-				}
-			
-?>						
-			<label for="thumbfb_post_types-<?php echo $cpt; ?>"><input type="checkbox" value="<?php echo $cpt; ?>" id="thumbfb_post_types-<?php echo $cpt; ?>" name="thumbfb_post_types[]" <?php echo $selected; ?>/> <?php echo $cpt; ?></label>
-
-<?php 		endforeach; ?>			
-			</td>
-		</tr>	
-		
-		</tbody>
-		
-	</table>
-
-		<p class="submit"><input type="submit" value="Save" class="button-primary" name="Submit"/></p>
-	</form>
 	
-</div>
+		//do_settings_fields( 'playoptions-group' );
+		do_settings_sections('thumbnailsforbackend-options');
+	
+	?>
+	
+	<?php submit_button(); ?>
+		</form>
+	</div>
 
 <?php
+
+	}
+	
+	public function initialize_options () {
+		
+		//Options
+		register_setting('thumbnailsforbackend-options-group', 'thumbfb_post_types');
+		register_setting('thumbnailsforbackend-options-group', 'thumbfb_embedded_images');
+		
+		add_settings_section(
+			'section-one',
+			'Options',
+			null,
+			'thumbnailsforbackend-options'
+		);
+		
+		add_settings_field('field-posts_types', 'Show thumbnails in', array(&$this, 'field_posts_types'), 'thumbnailsforbackend-options', 'section-one');
+		add_settings_field('field-embedded_images', 'Use Embedded images', array(&$this, 'field_embedded_images'), 'thumbnailsforbackend-options', 'section-one');
+
+	}
+	
+	public function field_embedded_images() {
+	
+		$thumbfb_embedded_images = get_option('thumbfb_embedded_images');		
+		$selected = $thumbfb_embedded_images == 1 ? ' checked="checked" ' : "";
+		
+?>
+		<input type="checkbox" value="1" id="thumbfb_embedded_images" name="thumbfb_embedded_images" <?php echo $selected; ?>/>
+<?php
+
+	}
+	
+	public function field_posts_types() {
+
+		$custom_post_types_builtin = get_post_types(array(
+				'_builtin' => true,
+				'show_ui' => true
+		
+		), 'objects');
+		
+		$custom_post_types = get_post_types(array(
+				'public'   => true,
+				'_builtin' => false,
+				'show_ui' => true
+		
+		), 'objects');
+		
+		$custom_post_types = array_merge($custom_post_types, $custom_post_types_builtin);
+		
+		$thumbfb_post_types = get_option('thumbfb_post_types');
+		
+		foreach ($custom_post_types as $post_type => $cpt) {
+		
+			if ($post_type == "attachment") continue;
+			$selected = "";
+			if (is_array( $thumbfb_post_types )) {	
+				$selected = ( in_array( $post_type, $thumbfb_post_types ) ? ' checked="checked" ' : '' ); 
+			}
+		
+?>	
+			<label for="thumbfb_post_types-<?php echo $post_type; ?>"><input type="checkbox" value="<?php echo $post_type; ?>" id="thumbfb_post_types-<?php echo $post_type; ?>" name="thumbfb_post_types[]" <?php echo $selected; ?>/> <?php echo $cpt->labels->name; ?></label>
+<?php
+		
+		}
 
 	}
 
@@ -289,5 +329,6 @@ if (is_admin()) {
 	$thumbfb = new Thumbnailsforbackend();
 	
 	add_action('admin_menu', array(&$thumbfb, 'admin_menu'), 10);
+	add_action('admin_init', array(&$thumbfb, 'initialize_options'), 10);
 	add_action('admin_init', array(&$thumbfb, 'add_thumbnails'), 10); //backwards compatible
 }
